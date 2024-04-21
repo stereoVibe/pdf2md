@@ -1,3 +1,4 @@
+from typing import Any
 from pdfminer.layout import LTFigure
 from pdfminer.layout import LTTextBox
 from pdfminer.layout import LTTextLine
@@ -19,7 +20,6 @@ class Pile(object):
         self.horizontals = []
         self.texts = []
         self.images = []
-
         self._SEARCH_DISTANCE = 1.0
 
     def __bool__(self):
@@ -42,7 +42,7 @@ class Pile(object):
             elif type(obj) == LTTextLineHorizontal:
                 try:
                     if len(list(obj)):
-                        font = list(obj)[0].fontname
+                        font = font
                         obj.bold = "Bold" in font
                         obj.italic = "Italic" in font or "Oblique" in font
                         obj.font = font
@@ -54,6 +54,7 @@ class Pile(object):
                 obj.chars = len(list(obj))
                 obj.size = round(obj.height, 0)
                 self.texts.append(obj)
+                
             elif type(obj) == LTRect:
                 if obj.width < 1.0:
                     self._adjust_to_close(obj, self.verticals, 'x0')
@@ -273,34 +274,61 @@ class Pile(object):
     def _gen_paragraph_markdown(self, syntax):
         markdown = ''
         prevtext = ''
+
+        font_names: set[Any] = {char.fontname for line in self.texts for char in line._objs if isinstance(char, LTChar)} 
+        font_sizes: set[float] = {round(char.size,0) for line in self.texts for char in line._objs if isinstance(char, LTChar)}
+        max_font_size: float = max(font_sizes)
+        min_font_size: float = min(font_sizes)
+
         for text in self.texts:
-            # print(f'Text >> {text.get_text()}')
             pattern = syntax.pattern(text)
             newline = syntax.newline(text)
             content = syntax.purify(text)
+
+            is_bold: bool = any('Bold' in name or 'Black' in name for name in font_names)
             # print(f'<< {content}')
 
-            # if 'heading' in pattern:
-            #     if prevtext.startswith('#'):
-            #         markdown += '\n'
-            #     continue
+            # markdown = re.sub(r'\n\s(\d+.\d+.)', r'\n\1', markdown)
+            
+            
+            if 'heading' in pattern:
+                if prevtext.startswith('#'):
+                    markdown += '\n'
+            
             if pattern == 'none':
                 if prevtext.startswith('#'):
                     markdown += '\n'
-                continue
-            elif pattern.startswith('heading'):
-                lead = '#' * int(pattern[-1])
-                if prevtext.startswith(lead):
-                    markdown += ' ' + content
-                else:
-                    markdown += '\n' + lead + ' ' + content
-            elif pattern.startswith('plain-text'):
-                markdown += ' ' + content + ' '
-            elif pattern.endswith('list-item'):
-                lead = '\n#####' if pattern.startswith('ordered') else ' ' # '-'
-                markdown += lead + ' ' + content
+            #     continue
+            # elif pattern.startswith('heading'):
+            #     lead = '#' * int(pattern[-1])
+            #     if prevtext.startswith(lead):
+            #         markdown += ' ' + content
+            #     else:
+            #         markdown += '\n' + lead + ' ' + content
+            # elif pattern.startswith('plain-text'):
+            #     markdown += ' ' + content + ' '
+            # elif pattern.endswith('list-item'):
+            #     lead = '\n#####' if pattern.startswith('ordered') else ' ' # '-'
+            #     markdown += lead + ' ' + content
+            # else:
+            #     raise Exception('Unsupported syntax pattern')
+            
+            if text.get_text().isupper() and re.match(r'^(\s|)\d+\.', text.get_text()) : 
+                markdown += f"## {text.get_text()}"
+            elif text.get_text().isupper() and text.size == max_font_size or\
+                text.get_text().isupper() and is_bold: 
+                markdown += f"# {text.get_text()}"
+            elif is_bold and re.match(r'^Раздел ', text.get_text()) or \
+                    is_bold and text.size > min_font_size and re.match(r'^(\s|)\d+\.\s', text.get_text()):
+                markdown += f"### {text.get_text()}"
+            elif re.match(r'^(\s|)(\d+\.){2}(\s{1}|\s{0}$)', text.get_text()):
+                markdown += f"#### {text.get_text()}"
+            elif is_bold and text.size > min_font_size and re.match(r'^\D+–', text.get_text()):
+                markdown += f"- {text.get_text()}"
+            elif re.match(r'^\d+\.\d+\.\d+.', text.get_text()):
+                markdown += f"- {text.get_text()}"
             else:
-                raise Exception('Unsupported syntax pattern')
+                markdown += text.get_text()
 
             if newline:
                 # markdown.strip()
@@ -310,13 +338,21 @@ class Pile(object):
             prevtext = markdown.split('\n')[-1]
 
         ###
+        # Удаляет цифру в конце строки, если затем идет перенос строки
+        markdown = re.sub(r'[^\d+]\d{1,2}\s+\n', '\n', markdown)        
+        markdown = re.sub(r'[^\d+]\d{1,2}\s+\n$', '\n', markdown)
         # Удаление случаев, когда есть пробел, перенос строки, и сразу за переносом идет маленькая буква
-        markdown = re.sub('  ', ' ', markdown)
+        markdown = re.sub(r'\ +', ' ', markdown)
         markdown = re.sub('\n{2,10}', '\n', markdown)
         markdown = re.sub(r"", ">", markdown)
-        markdown = re.sub(r" \n(?=[а-я\(\«)])", " ", markdown)
+        markdown = re.sub(r" \n(?=[а-я0-9\(\«)])", " ", markdown)
         markdown = re.sub(r"(?<=[\–]) \n(?=[А-Я\(\-])", " ", markdown)
         markdown = re.sub(r"(?<=[\>\-]) \n", " ", markdown)
+        # Удаление переноса строки между строками, начинающимися с '# '
+        markdown = re.sub(r'\n#(?=\s)', '', markdown)
+        # Удаление переноса строки где он идет сразу после установки пунктов (1., 1.2)
+        markdown = re.sub(r'(\#{1}\s(\d+\.){0,3}\s)\n', r'\1', markdown)
+        markdown = re.sub(r'\sстр. \d+ из', '', markdown) 
 
         # Дальнейшие правила для обработки текста
         # text = re.sub(r'(?<!\.\n)(?<!\n\n)(?<!\.\s)\n(?=[A-ZА-Я])', ' ', text)

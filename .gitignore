@@ -4,3 +4,4 @@
 /test.md
 /docs/
 .gitignore
+__pycache__/

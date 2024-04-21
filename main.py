@@ -13,6 +13,15 @@ from writer import Writer
 from syntax import UrbanSyntax
 
 links = [
+    "https://api.akbf.ru/file/download/d5d20ecb-f127-4b8b-890a-70d82a24376a.pdf",
+    "https://api.akbf.ru/file/download/6db760ab-4692-4f62-9139-f6c04861b98d.pdf",
+    "https://api.akbf.ru/file/download/c278e7bc-cf95-4d1e-83ab-d43b0183b1f6.pdf",
+    "https://api.akbf.ru/file/download/bf574298-080a-4649-b6d4-61ee7579165f.pdf",
+    "https://api.akbf.ru/file/download/ec48486d-d440-4f41-880f-33da6370a88c.pdf",
+    "https://api.akbf.ru/file/download/8332bfa3-fa21-4406-825c-4441232abfc8.pdf",
+    "https://api.akbf.ru/file/download/d166fa06-16d7-4ef4-b98b-50e07b9aa8d7.pdf",
+    "https://api.akbf.ru/file/download/9290e54e-2f8f-4c41-bb01-882185c25c0c.pdf",
+    "https://api.akbf.ru/file/download/d56f1877-2e5a-49b1-82a6-18148330ab68.pdf",
     # "https://akbf.ru/about-us/about-us",
     # "https://akbf.ru/about-us/news",
     # "https://akbf.ru/about-us/license",
@@ -29,7 +38,7 @@ links = [
     # "https://api.akbf.ru/file/download/bf574298-080a-4649-b6d4-61ee7579165f.pdf",
     # "https://api.akbf.ru/file/download/ec48486d-d440-4f41-880f-33da6370a88c.pdf",
     # "https://api.akbf.ru/file/download/8332bfa3-fa21-4406-825c-4441232abfc8.pdf",
-    "https://api.akbf.ru/file/download/d166fa06-16d7-4ef4-b98b-50e07b9aa8d7.pdf",
+    # "https://api.akbf.ru/file/download/d166fa06-16d7-4ef4-b98b-50e07b9aa8d7.pdf",
     # "https://api.akbf.ru/file/download/9290e54e-2f8f-4c41-bb01-882185c25c0c.pdf",
     # "https://api.akbf.ru/file/download/d56f1877-2e5a-49b1-82a6-18148330ab68.pdf",
     # "https://api.akbf.ru/file/download/a8d26a46-9da9-44db-9005-d625d563a57b.pdf",
